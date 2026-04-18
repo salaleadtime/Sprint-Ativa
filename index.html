@@ -278,6 +278,31 @@ tr[data-id][style*="background:#ffeaea"]:hover td.col-resumo { background: #ffd6
 @keyframes slideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 .info-banner { background: var(--blue-light); border: 1px solid var(--blue-mid); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #1e40af; margin-bottom: 14px; }
 .warn-banner { background: var(--amber-light); border: 1px solid var(--amber-mid); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #92400e; margin-bottom: 14px; }
+
+/* ── PLANILHA (SPREADSHEET VIEW) ────────────────────────────── */
+.sheet-formula-bar { display:flex; align-items:center; background:#f4f6fb; border:1.5px solid var(--border2); border-radius:8px 8px 0 0; font-family:'DM Mono',monospace; font-size:12px; overflow:hidden; }
+.sheet-name-box { min-width:72px; padding:5px 10px; border-right:1px solid var(--border2); text-align:center; font-weight:700; color:var(--header-bg); cursor:default; }
+.sheet-fx { padding:5px 10px; border-right:1px solid var(--border2); color:var(--purple); font-weight:700; font-style:italic; }
+.sheet-formula-val { padding:5px 12px; color:var(--text); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sheet-scroll-wrap { overflow:auto; border:1.5px solid var(--border2); border-top:none; border-radius:0 0 12px 12px; max-height:calc(100vh - 250px); box-shadow:var(--shadow); }
+.sheet-table { border-collapse:collapse; width:max-content; min-width:100%; }
+.sheet-corner { background:#dde2ef; min-width:42px; width:42px; position:sticky; left:0; top:0; z-index:13; border-right:2px solid var(--border2); border-bottom:2px solid var(--border2); }
+.sheet-col-header { background:#2a3a6b; color:#e8ecf8; padding:4px 6px; text-align:center; font-size:11px; font-weight:700; border-right:1px solid rgba(255,255,255,0.12); border-bottom:2px solid rgba(255,255,255,0.2); white-space:nowrap; position:sticky; top:0; z-index:10; font-family:'DM Mono',monospace; line-height:1.4; }
+.sheet-row-num { background:#dde2ef; color:#5a6172; font-family:'DM Mono',monospace; font-size:11px; text-align:center; padding:3px 8px; border-right:2px solid var(--border2); border-bottom:1px solid var(--border); position:sticky; left:0; z-index:5; min-width:42px; width:42px; font-weight:600; }
+.sheet-cell { padding:3px 7px; border-right:1px solid #e8ecf4; border-bottom:1px solid #e8ecf4; vertical-align:middle; cursor:cell; font-size:12px; white-space:nowrap; max-width:310px; overflow:hidden; text-overflow:ellipsis; transition:background .08s; }
+.sheet-cell:hover { background:#eff4ff !important; }
+.sheet-cell.selected { background:#dbeafe !important; outline:2px solid var(--blue); outline-offset:-2px; }
+.sheet-cell-calc { background:#fffcf0 !important; }
+.sheet-cell-calc:hover { background:#fff8dc !important; }
+.sheet-cell-calc.selected { background:#fef3c7 !important; outline:2px solid var(--amber); outline-offset:-2px; }
+.sheet-row-even .sheet-cell:not(.sheet-cell-calc) { background:#f8f9fb; }
+.sheet-row-even .sheet-row-num { background:#d4d9ec; }
+.sheet-text { display:block; overflow:hidden; text-overflow:ellipsis; max-width:280px; }
+.sheet-num { font-family:'DM Mono',monospace; text-align:right; display:block; }
+.sheet-date { font-family:'DM Mono',monospace; font-size:11px; color:#3b5bdb; }
+.sheet-legend { display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--text2); align-items:center; }
+.sheet-legend-item { display:flex; align-items:center; gap:5px; }
+.sheet-legend-color { width:14px; height:14px; border-radius:3px; flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -304,6 +329,7 @@ tr[data-id][style*="background:#ffeaea"]:hover td.col-resumo { background: #ffd6
   <div class="tab" onclick="switchTab('dashboard')">📊 Dashboard</div>
   <div class="tab" onclick="switchTab('saldo')">💰 Saldo da Sprint</div>
   <div class="tab" onclick="switchTab('steps')">📖 Passo a Passo</div>
+  <div class="tab" onclick="switchTab('planilha')">📊 Planilha</div>
 </div>
 
 <!-- ═══════════ TAB: BACKLOG ═══════════ -->
@@ -444,6 +470,25 @@ tr[data-id][style*="background:#ffeaea"]:hover td.col-resumo { background: #ffd6
   <div style="max-width:640px;margin:0 auto;">
     <div class="steps-grid" id="stepsGrid"></div>
   </div>
+</div>
+
+<!-- ═══════════ TAB: PLANILHA ═══════════ -->
+<div class="content" id="tab-planilha">
+  <div class="toolbar">
+    <button class="btn-primary" onclick="loadDemoData()">🎯 Carregar Demo</button>
+    <button class="btn-secondary" onclick="renderPlanilha()">↻ Atualizar</button>
+    <button class="btn-secondary" onclick="exportXLSX()">📤 Exportar XLSX</button>
+    <div style="flex:1"></div>
+    <span style="font-size:11px;color:var(--text3)">★ = calculado automaticamente &nbsp;|&nbsp; Clique em uma célula para ver a fórmula</span>
+  </div>
+  <div class="sheet-legend">
+    <span class="sheet-legend-item"><span class="sheet-legend-color" style="background:#fffbf0;border:1px solid #fcd34d"></span> Calculado</span>
+    <span class="sheet-legend-item"><span class="sheet-legend-color" style="background:#f0fdf4;border:1px solid #86efac"></span> Concluído</span>
+    <span class="sheet-legend-item"><span class="sheet-legend-color" style="background:#eff4ff;border:1px solid #bfcff8"></span> Em Desenvolvimento</span>
+    <span class="sheet-legend-item"><span class="sheet-legend-color" style="background:#fff1f1;border:1px solid #fca5a5"></span> Transbordo</span>
+    <span class="sheet-legend-item"><span class="sheet-legend-color" style="background:#fffbeb;border:1px solid #fcd34d"></span> Backlog / QA</span>
+  </div>
+  <div id="planilhaContainer" style="margin-top:10px"></div>
 </div>
 
 <!-- ══════════════ MODALS ══════════════ -->
@@ -1629,12 +1674,13 @@ document.addEventListener('click', e => {
 
 // ── TAB ──────────────────────────────────────────────────────────────────
 function switchTab(t) {
-  const tabs=['backlog','dashboard','saldo','steps'];
+  const tabs=['backlog','dashboard','saldo','steps','planilha'];
   document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===t));
   document.querySelectorAll('.content').forEach(el=>el.classList.remove('active'));
   document.getElementById('tab-'+t)?.classList.add('active');
   if (t==='dashboard') { renderDashboard(); setTimeout(renderBurndown,50); }
   if (t==='saldo') renderSaldo();
+  if (t==='planilha') renderPlanilha();
 }
 
 // ── TOAST SUGESTÃO ───────────────────────────────────────────────────────
@@ -1677,6 +1723,188 @@ function showToast(msg, dur=2400) {
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), dur);
+}
+
+// ── DEMO DATA ────────────────────────────────────────────────────────────
+function loadDemoData() {
+  if (cards.length > 0 && !confirm('Substituir dados atuais pela demonstração?')) return;
+  cfg = {
+    num:42, start:'2026-04-07', end:'2026-04-25', hpd:6,
+    devs:['Everton','Felipe','Caio','Fabiana','Hudysson'],
+    qas:['Larissa','Ana'], capDev:120, capQA:60
+  };
+  const seed = [
+    {chave:'SLOPC-4201',resumo:'[MELHORIA] Autenticação OAuth2 com Google e Microsoft',situacao:'Concluída',sp:8,hDev:24,dev:'Everton',inicioDev:'2026-04-07',hQA:8,qa:'Larissa',inicioQA:'2026-04-14'},
+    {chave:'SLOPC-4202',resumo:'Dashboard de métricas em tempo real com gráficos interativos',situacao:'Concluída',sp:5,hDev:16,dev:'Felipe',inicioDev:'2026-04-07',hQA:6,qa:'Ana',inicioQA:'2026-04-10'},
+    {chave:'SLOPC-4203',resumo:'Refatoração do módulo de relatórios PDF com novo layout',situacao:'Em Desenvolvimento',sp:5,hDev:16,dev:'Caio',inicioDev:'2026-04-14',hQA:4,qa:'Larissa'},
+    {chave:'SLOPC-4204',resumo:'API REST para integração com sistema ERP legado',situacao:'Em teste',sp:8,hDev:24,dev:'Fabiana',inicioDev:'2026-04-07',hQA:8,qa:'Larissa',inicioQA:'2026-04-14'},
+    {chave:'SLOPC-4205',resumo:'Migração de banco de dados Oracle para PostgreSQL',situacao:'Em homologação',sp:13,hDev:40,dev:'Hudysson',inicioDev:'2026-04-07',hQA:12,qa:'Ana',inicioQA:'2026-04-15'},
+    {chave:'SLOPC-4206',resumo:'Upload de arquivos com validação e preview em tempo real',situacao:'Desenvolvida',sp:3,hDev:8,dev:'Everton',inicioDev:'2026-04-14',hQA:4,qa:'Larissa'},
+    {chave:'SLOPC-4207',resumo:'Sistema de notificações push via WebSocket',situacao:'Em Desenvolvimento',sp:5,hDev:16,dev:'Felipe',inicioDev:'2026-04-16',hQA:6,qa:'Ana'},
+    {chave:'SLOPC-4208',resumo:'Otimização de queries SQL — módulo financeiro (>2s → <200ms)',situacao:'Disponivel para Teste',sp:3,hDev:8,dev:'Caio',inicioDev:'2026-04-14',hQA:4,qa:'Larissa',inicioQA:'2026-04-17'},
+    {chave:'SLOPC-4209',resumo:'Fluxo de aprovação em múltiplos níveis para subsídios',situacao:'Product Backlog',sp:13,hDev:40,dev:'Fabiana',inicioDev:'2026-04-22',hQA:12,qa:'Ana'},
+    {chave:'SLOPC-4210',resumo:'Exportação de relatórios em XLSX com formatação condicional',situacao:'Product Backlog',sp:3,hDev:8,dev:'Hudysson',inicioDev:'2026-04-28',hQA:4,qa:'Larissa'},
+    {chave:'SLOPC-4211',resumo:'[BUG] Correção do cálculo de juros compostos na calculadora',situacao:'Concluída',sp:2,hDev:4,dev:'Everton',inicioDev:'2026-04-10',hQA:2,qa:'Ana',inicioQA:'2026-04-11'},
+    {chave:'SLOPC-4212',resumo:'Tela de configurações de permissões por perfil de acesso',situacao:'Em deploy para teste',sp:5,hDev:16,dev:'Felipe',inicioDev:'2026-04-09',hQA:6,qa:'Larissa',inicioQA:'2026-04-14'},
+    {chave:'SLOPC-4213',resumo:'Integração com API de CEP para autopreenchimento de endereços',situacao:'Desenvolvida',sp:2,hDev:4,dev:'Caio',inicioDev:'2026-04-17',hQA:2,qa:'Ana'},
+    {chave:'SLOPC-4214',resumo:'Validação de formulários com feedback visual em tempo real',situacao:'Em Desenvolvimento',sp:3,hDev:8,dev:'Fabiana',inicioDev:'2026-04-17',hQA:4,qa:'Larissa'},
+    {chave:'SLOPC-4215',resumo:'Módulo de chat interno com histórico e pesquisa de mensagens',situacao:'Product Backlog',sp:21,hDev:60,dev:'Hudysson',inicioDev:'2026-04-28',hQA:16,qa:'Ana'},
+  ];
+  cards = seed.map(d => calcCard({
+    id:newId(), hDevManual:d.hDev>0, inicioQAManual:!!d.inicioQA,
+    transbordo:false, risco:'Baixo', contabiliza:1, observacao:'',
+    hQA:d.hQA||0, qa:d.qa||'', inicioQA:d.inicioQA||'', estQA:'',
+    statusDevManual:false, statusDev:'A Fazer', estDev:'', totalHoras:0,
+    desvioDev:'', desvioQA:'', ...d
+  }));
+  saveToLS(); updateTopBar(); renderTable(); renderDashboard(); renderSaldo(); renderPlanilha();
+  switchTab('planilha');
+  showToast('🎯 Demonstração carregada com 15 cards!', 3000);
+}
+
+// ── PLANILHA (SPREADSHEET VIEW) ───────────────────────────────────────────
+function colLetter(i) {
+  let s='', n=i+1;
+  while(n>0){ s=String.fromCharCode(64+(n-1)%26+1)+s; n=Math.floor((n-1)/26); }
+  return s;
+}
+
+function renderPlanilha() {
+  const container = document.getElementById('planilhaContainer');
+  if (!container) return;
+
+  const cols = [
+    {key:'chave',      label:'Chave',       width:110, type:'key'},
+    {key:'resumo',     label:'Resumo',      width:280, type:'text'},
+    {key:'situacao',   label:'Situação',    width:150, type:'status'},
+    {key:'sp',         label:'SP',          width:45,  type:'num'},
+    {key:'hDev',       label:'H.Dev',       width:58,  type:'num'},
+    {key:'dev',        label:'Dev',         width:100, type:'text'},
+    {key:'inicioDev',  label:'Início Dev',  width:95,  type:'date'},
+    {key:'estDev',     label:'Est.Dev ★',   width:95,  type:'date-calc'},
+    {key:'desvioDev',  label:'Desvio Dev ★',width:95,  type:'desvio'},
+    {key:'totalHoras', label:'Total h ★',   width:68,  type:'total'},
+    {key:'hQA',        label:'H.QA',        width:58,  type:'num'},
+    {key:'qa',         label:'QA',          width:100, type:'text'},
+    {key:'inicioQA',   label:'Início QA',   width:95,  type:'date'},
+    {key:'estQA',      label:'Est.QA ★',    width:95,  type:'date-calc'},
+    {key:'desvioQA',   label:'Desvio QA ★', width:95,  type:'desvio'},
+    {key:'statusDev',  label:'Status Dev',  width:120, type:'status-dev'},
+    {key:'transbordo', label:'Transbordo ★',width:95,  type:'bool-transb'},
+    {key:'contabiliza',label:'Cont. ★',     width:52,  type:'bool'},
+    {key:'observacao', label:'Observação',  width:160, type:'text'},
+  ];
+
+  const statusDevClass = {
+    'A Fazer':'status-afazer','Em Atendimento':'status-andamento',
+    'Aguardando QA':'status-afazer','Atendimento QA':'status-homol',
+    'Homol PO':'status-homol','Concluído':'status-concluido','Bloqueio':'status-afazer'
+  };
+
+  let html = `<div class="sheet-formula-bar">
+    <span class="sheet-name-box" id="sheetNameBox">A1</span>
+    <span class="sheet-fx">fx</span>
+    <span class="sheet-formula-val" id="sheetFormulaVal">Selecione uma célula para ver seu valor ou fórmula</span>
+  </div>
+  <div class="sheet-scroll-wrap">
+  <table class="sheet-table">
+  <thead>
+    <tr>
+      <th class="sheet-corner"></th>
+      ${cols.map((c,i)=>`<th class="sheet-col-header" style="min-width:${c.width}px">${colLetter(i)}<br><span style="font-size:9px;font-weight:400;opacity:.75">${c.label}</span></th>`).join('')}
+    </tr>
+  </thead>
+  <tbody>`;
+
+  if (!cards.length) {
+    html += `<tr><td colspan="${cols.length+1}" style="text-align:center;padding:48px;color:var(--text3)">
+      📋 Nenhum dado. Clique em <strong>🎯 Carregar Demo</strong> para ver a demonstração completa.
+    </td></tr>`;
+  } else {
+    cards.forEach((c, ri) => {
+      const rowNum = ri + 2; // row 1 = header in spreadsheet terms
+      const isEven = (ri % 2 === 1);
+      const isTransb = c.transbordo;
+      const isDone = STATUS_DONE.includes(c.situacao);
+      let rowBg = '';
+      if (isTransb) rowBg = ' style="background:#fff0f0"';
+      else if (isDone) rowBg = ' style="background:#f0fdf4"';
+      html += `<tr data-row="${rowNum}"${rowBg}${isEven&&!isTransb&&!isDone?' class="sheet-row-even"':''}>`;
+      html += `<td class="sheet-row-num">${rowNum}</td>`;
+      cols.forEach((col, ci) => {
+        const val = c[col.key];
+        let cellContent = '', formula = String(val??''), extraClass = '';
+        const cl = colLetter(ci);
+        switch(col.type) {
+          case 'key':
+            cellContent = `<span class="chip-key">${val||'—'}</span>`;
+            break;
+          case 'text':
+            cellContent = `<span class="sheet-text">${(val||'').replace(/</g,'&lt;')}</span>`;
+            break;
+          case 'status':
+            cellContent = `<span class="sit ${sitClass(val)}">${val||''}</span>`;
+            break;
+          case 'num':
+            cellContent = `<span class="sheet-num">${val||''}</span>`;
+            break;
+          case 'date':
+            cellContent = `<span class="sheet-date">${fmtDate(val)}</span>`;
+            break;
+          case 'date-calc':
+            extraClass = ' sheet-cell-calc';
+            const isLate = val && cfg.end && val > cfg.end;
+            cellContent = val ? `<span class="calc-date${isLate?' atrasado':''}">${fmtDate(val)}</span>` : `<span class="dev-dash">—</span>`;
+            formula = col.key==='estDev'
+              ? `=WORKDAY(G${rowNum}, CEILING(E${rowNum}/6, 1)-1)`
+              : `=WORKDAY(M${rowNum}, CEILING(K${rowNum}/6, 1)-1)`;
+            break;
+          case 'desvio':
+            extraClass = ' sheet-cell-calc';
+            cellContent = val==='ok' ? `<span class="dev-ok">🟢 No prazo</span>`
+                        : val==='atrasado' ? `<span class="dev-atrasado">🔴 Atrasado</span>`
+                        : `<span class="dev-dash">—</span>`;
+            formula = col.key==='desvioDev'
+              ? `=IF(H${rowNum}<="${cfg.end||''}","ok","atrasado")`
+              : `=IF(N${rowNum}<="${cfg.end||''}","ok","atrasado")`;
+            break;
+          case 'total':
+            extraClass = ' sheet-cell-calc';
+            cellContent = val ? `<span class="total-chip">${val}h</span>` : `<span class="dev-dash">—</span>`;
+            formula = `=E${rowNum}+K${rowNum}`;
+            break;
+          case 'status-dev':
+            cellContent = val ? `<span class="${statusDevClass[val]||'status-afazer'}">${val}</span>` : '';
+            break;
+          case 'bool-transb':
+            extraClass = ' sheet-cell-calc';
+            cellContent = val ? `<span class="transb-badge">⚠️ SIM</span>` : `<span class="no-transb">NÃO</span>`;
+            formula = `=OR(H${rowNum}>"${cfg.end||''}",N${rowNum}>"${cfg.end||''}")`;
+            break;
+          case 'bool':
+            extraClass = ' sheet-cell-calc';
+            cellContent = val===1 ? `<span class="contabiliza">1</span>` : `<span class="contabiliza nao-contabiliza">0</span>`;
+            formula = `=IF(Q${rowNum}=TRUE,0,1)`;
+            break;
+        }
+        const safeFormula = formula.replace(/'/g,"\\'").replace(/"/g,'&quot;');
+        html += `<td class="sheet-cell${extraClass}" onclick="selectSheetCell(${rowNum},${ci},'${cl}','${safeFormula}')">${cellContent}</td>`;
+      });
+      html += `</tr>`;
+    });
+  }
+
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
+
+function selectSheetCell(row, colIdx, cl, formula) {
+  document.querySelectorAll('.sheet-cell.selected').forEach(el=>el.classList.remove('selected'));
+  const tr = document.querySelector(`tr[data-row="${row}"]`);
+  if (tr) { const cells = tr.querySelectorAll('.sheet-cell'); if (cells[colIdx]) cells[colIdx].classList.add('selected'); }
+  const nb = document.getElementById('sheetNameBox'), fv = document.getElementById('sheetFormulaVal');
+  if (nb) nb.textContent = cl + row;
+  if (fv) fv.textContent = formula;
 }
 
 // ── INIT ─────────────────────────────────────────────────────────────────
